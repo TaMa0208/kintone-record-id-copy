@@ -1,17 +1,23 @@
+// 保存完了後にレコード番号をフィールドにコピーするカスタマイズ
 (function () {
   'use strict';
-  const EVENTS = [
-    'app.record.create.show',
-    'app.record.edit.show',
-    'app.record.detail.show'
-  ];
-  kintone.events.on(EVENTS, function (event) {
-    const recordId = kintone.app.record.getId();
-    if (!recordId) return event;
-    const targetField = 'レコード番号copy';
-    if (event.record[targetField]) {
-      event.record[targetField].value = recordId.toString();
-    }
-    return event;
+
+  kintone.events.on('app.record.create.submit.success', function (event) {
+    const recordId = event.recordId; // 保存後のID取得
+    const appId = kintone.app.getId(); // アプリIDを取得
+
+    const body = {
+      app: appId,
+      id: recordId,
+      record: {
+        'レコード番号copy': {
+          value: recordId.toString()
+        }
+      }
+    };
+
+    return kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', body).then(function () {
+      return event;
+    });
   });
 })();
